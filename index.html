@@ -35,21 +35,29 @@
 
             if(!usernameInput || !passwordInput) return alert('Preencha todos os campos!');
 
-            // Busca corrigida e direta no Supabase
             const { data, error } = await _supabase
                 .from('usuarios')
                 .select('username, role, password')
                 .eq('username', usernameInput)
-                .single();
+                .slice(0, 1); // Garante o retorno seguro do registro
 
-            if (error || !data || data.password !== passwordInput) {
-                alert('Usuário ou senha inválidos.');
-            } else {
-                // Guarda a sessão segura temporária no navegador
-                localStorage.setItem('app_username', data.username);
-                localStorage.setItem('app_role', data.role);
-                window.location.href = 'dashboard.html';
+            // DIAGNÓSTICO SEGURO DE ERRO
+            if (error) {
+                return alert('Erro no Banco de Dados: ' + error.message);
             }
+
+            if (!data || data.length === 0) {
+                return alert('Erro: Usuário não encontrado no banco de dados!');
+            }
+
+            if (data[0].password !== passwordInput) {
+                return alert('Erro: Senha incorreta para este usuário!');
+            }
+
+            // Se passar por tudo, loga com sucesso
+            localStorage.setItem('app_username', data[0].username);
+            localStorage.setItem('app_role', data[0].role);
+            window.location.href = 'dashboard.html';
         }
     </script>
 </body>
