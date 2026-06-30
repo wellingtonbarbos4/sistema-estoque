@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciamento de Estoque</title>
+    <link rel="stylesheet" href="css/global.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        .container { padding: 1.5rem; max-width: 1200px; margin: 0 auto; }
+        .header-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .header-actions h1 { font-size: 1.5rem; font-weight: 700; color: var(--primary); }
+        
+        /* Botão Premium */
+        .btn-primary { background: var(--accent); color: white; border: none; padding: 0.75rem 1.25rem; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        .btn-primary:hover { background: #1d4ed8; }
+        
+        /* Lista de Produtos */
+        .product-list { display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem; }
+        .product-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+        .product-info h3 { font-size: 1rem; color: var(--text-main); }
+        .product-info p { font-size: 0.85rem; color: var(--text-muted); }
+        
+        /* Controles de Estoque */
+        .stock-controls { display: flex; align-items: center; gap: 0.75rem; }
+        .stock-badge { background: #f1f5f9; padding: 0.5rem 1rem; border-radius: 8px; font-weight: 700; min-width: 50px; text-align: center; }
+        .btn-action { width: 36px; height: 36px; border-radius: 8px; border: none; font-size: 1.2rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .btn-up { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+        .btn-down { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+        
+        /* Formulário Rápido Oculto */
+        .form-add { display: none; margin-bottom: 1.5rem; background: #fff; padding: 1rem; border-radius: 12px; border: 1px solid var(--border); }
+        .form-group { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+        .form-control { flex: 1; padding: 0.5rem; border: 1px solid var(--border); border-radius: 6px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header-actions">
+            <h1>Meu Estoque</h1>
+            <button class="btn-primary" onclick="toggleForm()">+ Novo Produto</button>
+        </div>
+
+        <div id="box-form" class="form-add">
+            <h3>Cadastrar Novo Produto</h3>
+            <div class="form-group">
+                <input type="text" id="new-product-name" class="form-control" placeholder="Nome do Produto (Ex: Cabo iPhone Turbo)">
+                <button class="btn-primary" onclick="salvarProduto()">Salvar</button>
+            </div>
+        </div>
+
+        <div class="product-list" id="lista-produtos">
+            <p style="color: var(--text-muted);">Carregando produtos do banco...</p>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="dashboard.html" class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+            <span>Home</span>
+        </a>
+        <a href="operacoes.html" class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
+            <span>Operações</span>
+        </a>
+        <a href="clientes.html" class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+            <span>Clientes</span>
+        </a>
+        <a href="estoque.html" class="nav-item active">
+            <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-5 14H4v-4h11v4zm0-5H4V9h11v4zm5 5h-4V9h4v9z"/></svg>
+            <span>Estoque</span>
+        </a>
+    </nav>
+
+    <script src="js/supabase-config.js"></script>
+    <script>
+        // Mostrar/Ocultar formulário de cadastro
+        function toggleForm() {
+            const form = document.getElementById('box-form');
+            form.style.display = form.style.display === 'block' ? 'none' : 'block';
+        }
+
+        // 1. FUNÇÃO PARA BUSCAR PRODUTOS DO SUPABASE
+        async function carregarProdutos() {
+            const { data, error } = await _supabase
+                .from('produtos')
+                .select('*')
+                .order('nome', { ascending: true });
+
+            if (error) {
+                console.error("Erro ao carregar:", error);
+                return;
+            }
+
+            const lista = document.getElementById('lista-produtos');
+            lista.innerHTML = '';
+
+            if(data.length === 0) {
+                lista.innerHTML = `<p style="color: var(--text-muted);">Nenhum produto cadastrado ainda.</p>`;
+                return;
+            }
+
+            data.forEach(prod => {
+                lista.innerHTML += `
+                    <div class="product-item">
+                        <div class="product-info">
+                            <h3>${prod.nome}</h3>
+                            <p>Última alteração: ${new Date(prod.updated_at).toLocaleDateString('pt-BR')}</p>
+                        </div>
+                        <div class="stock-controls">
+                            <button class="btn-action btn-down" onclick="alterarEstoque('${prod.id}', ${prod.quantidade_atual}, 'SAIDA')">-</button>
+                            <span class="stock-badge">${prod.quantidade_atual}</span>
+                            <button class="btn-action btn-up" onclick="alterarEstoque('${prod.id}', ${prod.quantidade_atual}, 'ENTRADA')">+</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // 2. FUNÇÃO PARA SALVAR NOVO PRODUTO
+        async function salvarProduto() {
+            const nomeInput = document.getElementById('new-product-name');
+            const nome = nomeInput.value.trim();
+
+            if(!nome) return alert('Digite o nome do produto!');
+
+            const { error } = await _supabase
+                .from('produtos')
+                .insert([{ nome: nome, quantidade_atual: 0 }]);
+
+            if (error) {
+                alert('Erro ao salvar produto');
+            } else {
+                nomeInput.value = '';
+                toggleForm();
+                carregarProdutos(); // Atualiza a lista na tela
+            }
+        }
+
+        // 3. FUNÇÃO PARA ALTERAR QUANTIDADE (+ ou -)
+        async function alterarEstoque(id, qtdAtual, tipo) {
+            const qtdInformada = prompt(`Quantas unidades deseja de ${tipo === 'ENTRADA' ? 'inserir' : 'retirar'}?`, "1");
+            if (!qtdInformada || isNaN(qtdInformada) || parseInt(qtdInformada) <= 0) return;
+
+            const valorAlteracao = parseInt(qtdInformada);
+            let novaQtd = tipo === 'ENTRADA' ? qtdAtual + valorAlteracao : qtdAtual - valorAlteracao;
+
+            if (novaQtd < 0) return alert('Estoque não pode ficar negativo!');
+
+            // Passo A: Atualiza a quantidade na tabela 'produtos'
+            const { error: errProd } = await _supabase
+                .from('produtos')
+                .update({ quantidade_atual: novaQtd, updated_at: new Date() })
+                .eq('id', id);
+
+            if(errProd) return alert('Erro ao atualizar estoque.');
+
+            // Passo B: Registra o histórico na tabela 'movimentacoes'
+            await _supabase
+                .from('movimentacoes')
+                .insert([{
+                    produto_id: id,
+                    usuario_nome: 'Operador',
+                    tipo: tipo,
+                    quantidade: valorAlteracao,
+                    observacao: 'Ajuste manual rápido no estoque'
+                }]);
+
+            carregarProdutos(); // Atualiza a tela
+        }
+
+        // Executa a busca assim que abre a página
+        carregarProdutos();
+    </script>
+</body>
+</html>
