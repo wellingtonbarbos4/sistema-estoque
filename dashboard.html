@@ -3,83 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Painel Geral</title>
+    <title>Dashboard Geral</title>
     <link rel="stylesheet" href="css/global.css">
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        .container { padding: 1.5rem; max-width: 1200px; margin: 0 auto; }
-        .welcome-section { margin-bottom: 2rem; }
-        .welcome-section h1 { font-size: 1.5rem; font-weight: 700; color: var(--primary); }
-        .welcome-section p { color: var(--text-muted); font-size: 0.9rem; margin-top: 2px; }
+        .grid-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
+        .metric-card { padding: 1.25rem; border-radius: var(--radius-lg); background: #fff; border: 1px solid var(--border); }
+        .metric-val { font-size: 1.75rem; font-weight: 700; margin-top: 0.5rem; }
         .grid-charts { display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-top: 1.5rem; }
-        @media (min-width: 768px) { .grid-charts { grid-template-columns: 2fr 1fr; } }
+        @media (min-width: 768px) { .grid-charts { grid-template-columns: 1fr 1fr; } }
     </style>
 </head>
 <body>
-
     <div class="container">
-        <div class="welcome-section">
-            <h1 id="user-greeting">Olá, Carregando...</h1>
-            <p>Aqui está o panorama das movimentações recentes.</p>
+        <div>
+            <h1 id="txt-welcome">Olá, ...</h1>
+            <p>Resumo operacional em tempo real baseado no banco de dados.</p>
+        </div>
+
+        <div class="grid-metrics">
+            <div class="metric-card"><p>Total de Saídas</p><div class="metric-val" id="m-saidas" style="color:var(--danger)">0</div></div>
+            <div class="metric-card"><p>Pendências Ativas</p><div class="metric-val" id="m-pendencias" style="color:var(--warning)">0</div></div>
         </div>
 
         <div class="grid-charts">
-            <div class="card">
-                <div id="chart-timeline"></div>
-            </div>
-            <div class="card">
-                <div id="chart-donut"></div>
-            </div>
+            <div class="card"><div id="chart-operacoes"></div></div>
+            <div class="card"><div id="chart-produtos"></div></div>
         </div>
     </div>
 
     <nav class="bottom-nav">
-        <a href="dashboard.html" class="nav-item active">
-            <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-            <span>Home</span>
-        </a>
-        <a href="operacoes.html" class="nav-item">
-            <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
-            <span>Operações</span>
-        </a>
-        <a href="clientes.html" class="nav-item">
-            <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
-            <span>Clientes</span>
-        </a>
-        <a href="estoque.html" class="nav-item">
-            <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-5 14H4v-4h11v4zm0-5H4V9h11v4zm5 5h-4V9h4v9z"/></svg>
-            <span>Estoque</span>
-        </a>
+        <a href="dashboard.html" class="nav-item active"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span>Home</span></a>
+        <a href="operacoes.html" class="nav-item"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg><span>Operações</span></a>
+        <a href="clientes.html" class="nav-item"><svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg><span>Clientes</span></a>
+        <a href="estoque.html" class="nav-item"><svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-5 14H4v-4h11v4zm0-5H4V9h11v4zm5 5h-4V9h4v9z"/></svg><span>Estoque</span></a>
+        <a href="configuracoes.html" class="nav-item"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg><span>Ajustes</span></a>
     </nav>
 
     <script src="js/supabase-config.js"></script>
     <script>
-        // Configuração visual dos gráficos
-        const optionsTimeline = {
-            chart: { type: 'area', height: 300, toolbar: { show: false }, fontFamily: 'inherit' },
-            colors: ['#2563eb'],
-            dataLabels: { enabled: false },
-            stroke: { curve: 'smooth', width: 3 },
-            series: [{ name: 'Saídas', data: [12, 18, 15, 25, 22, 30, 28] }],
-            xaxis: { categories: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'] },
-            title: { text: 'Movimentação Semanal', style: { fontSize: '16px', fontWeight: 600 } }
-        };
+        // Segurança: Proteção de Tela
+        const user = localStorage.getItem('app_username');
+        const role = localStorage.getItem('app_role');
+        if(!user) { window.location.href = 'index.html'; }
+        document.getElementById('txt-welcome').textContent = `Olá, ${user} (${role})`;
 
-        const optionsDonut = {
-            chart: { type: 'donut', height: 300, fontFamily: 'inherit' },
-            colors: ['#0f172a', '#2563eb', '#10b981', '#f59e0b'],
-            series: [40, 25, 20, 15],
-            labels: ['Cabos', 'Carregadores', 'Fones', 'Outros'],
-            title: { text: 'Produtos Mais Movimentados', style: { fontSize: '16px', fontWeight: 600 } },
-            legend: { position: 'bottom' }
-        };
+        async function montarDadosDinamicos() {
+            const { data: movs } = await _supabase.from('movimentacoes').select('*, produtos(nome)');
+            
+            let totalSaidas = 0;
+            let totalPendencias = 0;
+            let produtosMap = {};
 
-        new ApexCharts(document.querySelector("#chart-timeline"), optionsTimeline).render();
-        new ApexCharts(document.querySelector("#chart-donut"), optionsDonut).render();
+            movs.forEach(m => {
+                if(m.tipo === 'SAIDA') totalSaidas += m.quantidade;
+                if(m.tipo === 'PENDENCIA') totalPendencias += m.quantidade;
 
-        // Nome temporário enquanto não fazemos a tela de login
-        document.getElementById('user-greeting').textContent = "Olá, Operador";
+                // Agrupa quantidades por nome real do produto
+                const pNome = m.produtos?.nome || 'Outros';
+                produtosMap[pNome] = (produtosMap[pNome] || 0) + m.quantidade;
+            });
+
+            document.getElementById('m-saidas').textContent = totalSaidas;
+            document.getElementById('m-pendencias').textContent = totalPendencias;
+
+            // Gráfico 1: Tipo de Operações
+            new ApexCharts(document.querySelector("#chart-operacoes"), {
+                chart: { type: 'donut', height: 280, fontFamily: 'inherit' },
+                colors: ['#dc2626', '#d97706'],
+                series: [totalSaidas, totalPendencias],
+                labels: ['Saídas Comerciais', 'Pendências/Consignados'],
+                title: { text: 'Proporção de Fluxo', style: { fontWeight: 600 } }
+            }).render();
+
+            // Gráfico 2: Produtos Reais
+            new ApexCharts(document.querySelector("#chart-produtos"), {
+                chart: { type: 'bar', height: 280, fontFamily: 'inherit', toolbar: {show:false} },
+                colors: ['#2563eb'],
+                series: [{ name: 'Volumetria', data: Object.values(produtosMap) }],
+                xaxis: { categories: Object.keys(produtosMap) },
+                title: { text: 'Produtos Mais Movimentados', style: { fontWeight: 600 } }
+            }).render();
+        }
+
+        montarDadosDinamicos();
     </script>
 </body>
 </html>
