@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acesso ao Sistema</title>
+    <link rel="stylesheet" href="css/global.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        .login-wrapper { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #f5f5f5; padding: 1rem; }
+        .login-card { width: 100%; max-width: 380px; }
+        .brand { text-align: center; margin-bottom: 1.5rem; font-weight: 800; letter-spacing: -0.04em; font-size: 1.5rem; }
+        .form-stack { display: flex; flex-direction: column; gap: 1rem; margin-top: 1.5rem; }
+    </style>
+</head>
+<body>
+    <div class="login-wrapper">
+        <div class="card login-card">
+            <div class="brand">SISTEMA CO.</div>
+            <p style="text-align: center; margin-bottom: 1rem;">Insira suas credenciais operacionais.</p>
+            
+            <div class="form-stack">
+                <input type="text" id="user" class="form-control" placeholder="Usuário">
+                <input type="password" id="pass" class="form-control" placeholder="Senha">
+                <button class="btn-primary" style="padding: 0.8rem;" onclick="autenticar()">Entrar no Painel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/supabase-config.js"></script>
+    <script>
+        async function autenticar() {
+            const usernameInput = document.getElementById('user').value.trim();
+            const passwordInput = document.getElementById('pass').value.trim();
+
+            if(!usernameInput || !passwordInput) return alert('Preencha todos os campos!');
+
+            // Busca o usuário correspondente direto no banco
+            const { data, error } = await _supabase
+                .from('usuarios')
+                .where ? : .from('usuarios').select('username, role, password').eq('username', usernameInput).single();
+
+            if (error || !data || data.password !== passwordInput) {
+                alert('Usuário ou senha inválidos.');
+            } else {
+                // Guarda a sessão segura temporária no navegador
+                localStorage.setItem('app_username', data.username);
+                localStorage.setItem('app_role', data.role);
+                window.location.href = 'dashboard.html';
+            }
+        }
+    </script>
+</body>
+</html>
