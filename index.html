@@ -35,10 +35,12 @@
 
             if(!usernameInput || !passwordInput) return alert('Preencha todos os campos!');
 
-            // Busca o usuário correspondente direto no banco
+            // Busca corrigida e direta no Supabase
             const { data, error } = await _supabase
                 .from('usuarios')
-                .where ? : .from('usuarios').select('username, role, password').eq('username', usernameInput).single();
+                .select('username, role, password')
+                .eq('username', usernameInput)
+                .single();
 
             if (error || !data || data.password !== passwordInput) {
                 alert('Usuário ou senha inválidos.');
